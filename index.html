@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<meta name="description" content="Your personal offline workout tracker">
+<link rel="manifest" href="manifest.json">
+<title>My Fitness Journey</title>
+<style>
+:root{--bg:#f7f3ff;--card:#fff;--text:#241b35;--muted:#746a85;--accent:#7c3aed;--accent2:#ede3ff;--line:#eee6fa;--green:#16875d;--orange:#c26a15;--shadow:0 8px 24px #37205a12}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:82px}
+header{padding:22px 18px 16px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border-radius:0 0 28px 28px}
+header .top{display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:23px;margin:0;font-weight:800}header p{margin:6px 0 0;color:#f2eaff;font-size:13px}
+main{max-width:760px;margin:auto;padding:16px}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 4px max(9px,env(safe-area-inset-bottom));z-index:10}
+nav button{border:0;background:transparent;color:var(--muted);font-size:11px;padding:6px 8px;border-radius:12px;flex:1}nav button.active{color:var(--accent);background:var(--accent2);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.muted{color:var(--muted)}.small{font-size:12px}.pill{background:var(--accent2);color:var(--accent);padding:6px 10px;border-radius:99px;font-size:12px;font-weight:700}
+h2{font-size:18px;margin:4px 0 12px}h3{font-size:15px;margin:0 0 6px}.big{font-size:28px;font-weight:800}.btn{border:0;border-radius:14px;background:var(--accent);color:white;padding:13px 16px;font-weight:700;width:100%;margin-top:8px;font-size:14px}.btn.secondary{background:var(--accent2);color:var(--accent)}.btn.light{background:#f3eff8;color:var(--text)}.btn.danger{background:#fff0f0;color:#b42318}
+.progress{height:9px;background:#eee7f7;border-radius:99px;overflow:hidden;margin:9px 0}.progress span{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#c084fc);border-radius:99px}
+.exercise{border:1px solid var(--line);border-radius:15px;padding:12px;margin:9px 0}.exercise .name{font-weight:700}.exercise .detail{font-size:12px;color:var(--muted);margin-top:4px}.status{font-size:12px;border:1px solid var(--line);background:#fff;padding:8px;border-radius:10px;max-width:145px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #ddd2ee;border-radius:12px;background:white;font:inherit;color:var(--text);margin:5px 0 12px}label{font-size:13px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:#faf7ff;border-radius:14px;padding:12px}.stat strong{display:block;font-size:22px}.day{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);gap:10px}.day:last-child{border:0}.tag{font-size:11px;border-radius:99px;padding:5px 8px;background:#f1edf7;color:#716581}.tag.done{background:#e6f7ef;color:#13784e}.tag.rest{background:#fff4e5;color:#925a13}
+.hidden{display:none!important}.notice{background:#fff7e8;border:1px solid #ffe1ad;padding:12px;border-radius:14px;font-size:12px;color:#80500c}.foot{text-align:center;color:var(--muted);font-size:11px;padding:16px}
+</style>
+</head>
+<body>
+<header><div class="top"><div><h1>My Fitness Journey</h1><p id="todayLine">Your daily strength journey</p></div><div style="font-size:32px">💜</div></div></header>
+<main id="app"></main>
+<nav id="nav">
+<button class="active" data-tab="home">🏠<br>Home</button>
+<button data-tab="plan">📅<br>Weekly Plan</button>
+<button data-tab="history">📈<br>Progress</button>
+<button data-tab="settings">⚙️<br>Settings</button>
+</nav>
+<script>
+const STORE='mfj_data_v1';
+const plan={
+Monday:{title:'Full Body Workout',type:'Strength',items:[['Dumbbell squats','2 sets × 10 reps'],['Dumbbell floor chest press','2 × 10'],['One-arm dumbbell row','2 × 10 each side'],['Dumbbell shoulder press','2 × 8–10'],['Glute bridges','2 × 12'],['Standing calf raises','2 × 15']]},
+Tuesday:{title:'Legs & Glutes',type:'Strength',items:[['Dumbbell squats','2 × 10'],['Dumbbell Romanian deadlift','2 × 10'],['Reverse lunges','2 × 8 each leg'],['Glute bridges','3 × 12'],['Side-lying leg raises','2 × 12 each side'],['Calf raises','2 × 15']]},
+Wednesday:{title:'Recovery Day',type:'Recovery',items:[['Gentle walking','10 minutes'],['Cat-cow stretch','5 minutes'],["Child’s pose",'5 minutes'],['Hamstring stretch','5 minutes'],['Shoulder and arm stretches','5 minutes'],['Relaxation and breathing','10 minutes']]},
+Thursday:{title:'Upper Body Workout',type:'Strength',items:[['Dumbbell biceps curls','2 × 10'],['Dumbbell shoulder press','2 × 10'],['Dumbbell lateral raises','2 × 10'],['Dumbbell floor chest press','2 × 10'],['One-arm dumbbell row','2 × 10 each side'],['Overhead triceps extension','2 × 10']]},
+Friday:{title:'Full Body Workout',type:'Strength',items:[['Dumbbell sumo squats','2 × 10'],['Dumbbell deadlift','2 × 10'],['Dumbbell hammer curls','2 × 10'],['Dumbbell floor press','2 × 10'],['Bird-dog exercise','2 × 10 each side'],['Glute bridges','2 × 12']]},
+Saturday:{title:'Active Recovery',type:'Recovery',items:[['Gentle walking','15 minutes'],['Full-body stretching','15 minutes'],['Light mobility exercises','10 minutes'],['Relaxation','10 minutes']]},
+Sunday:{title:'Rest Day',type:'Rest',items:[['Optional gentle stretching','5–10 minutes'],['Relaxation','As needed']]}
+};
+const days=Object.keys(plan);
+let data=load();
+let tab='home';
+function load(){try{return JSON.parse(localStorage.getItem(STORE))||{records:{},weight:37,weights:[],reminder:false}}catch(e){return {records:{},weight:37,weights:[],reminder:false}}}
+function save(){localStorage.setItem(STORE,JSON.stringify(data))}
+function dateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function dayName(d=new Date()){return d.toLocaleDateString('en-US',{weekday:'long'})}
+function rec(key=dateKey()){if(!data.records[key]){let day=dayName(new Date(key+'T12:00:00'));data.records[key]={day,title:plan[day].title,statuses:plan[day].items.map(()=> 'Not Started'),sets:{},started:null,ended:null,notes:'',duration:0};save()}return data.records[key]}
+function isRest(day){return plan[day].type==='Rest'}
+function doneCount(r){return r.statuses.filter(s=>s==='Completed').length}
+function percent(r){return Math.round(doneCount(r)/Math.max(r.statuses.length,1)*100)}
+function statusLabel(r){if(isRest(r.day))return 'Rest Day';if(r.statuses.every(s=>s==='Completed'||s==='Skipped'))return 'Completed';if(r.statuses.some(s=>s==='Completed'||s==='In Progress'))return 'In Progress';return 'Not Started'}
+function dateText(d=new Date()){return d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){document.getElementById('todayLine').textContent=dateText();document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));const app=document.getElementById('app');if(tab==='home')app.innerHTML=home();else if(tab==='plan')app.innerHTML=weekly();else if(tab==='history')app.innerHTML=historyView();else app.innerHTML=settings();wire()}
+function home(){let r=rec(),day=dayName(),p=plan[day],status=statusLabel(r),pc=percent(r);return `
+<div class="card"><div class="row"><div><div class="muted small">${dateText()}</div><h2 style="margin-top:7px">${p.title}</h2><div class="muted small">🕡 6:30 PM – 7:30 PM</div></div><span class="pill">${p.type}</span></div>
+<div class="progress"><span style="width:${pc}%"></span></div><div class="row"><span class="muted small">${doneCount(r)} of ${r.statuses.length} exercises completed</span><strong>${pc}%</strong></div>
+<button class="btn" id="startBtn">${r.started&&!r.ended?'Continue Workout':status==='Completed'?'View Today’s Workout':'Start Today’s Workout'}</button></div>
+<div class="grid"><div class="stat"><span class="muted small">This week</span><strong>${weekCompleted()}</strong><span class="muted small">active days done</span></div><div class="stat"><span class="muted small">Current weight</span><strong>${data.weight||'—'} kg</strong><span class="muted small">optional tracking</span></div></div>
+<div class="card"><div class="row"><h2>Today’s exercises</h2><span class="tag ${status==='Completed'?'done':''}">${status}</span></div>${p.items.map((it,i)=>exerciseCard(it,i,r)).join('')}
+<button class="btn secondary" id="finishBtn">Finish & Save Workout</button></div>
+<div class="notice">Begin with light weights and comfortable effort. Rest between sets. Stop if you feel dizzy or have sharp pain.</div>`}
+function exerciseCard(it,i,r){let s=r.statuses[i]||'Not Started';return `<div class="exercise"><div class="row"><div><div class="name">${escapeHtml(it[0])}</div><div class="detail">${escapeHtml(it[1])}</div></div><select class="status statusSelect" data-i="${i}">${['Not Started','In Progress','Completed','Skipped'].map(x=>`<option ${x===s?'selected':''}>${x}</option>`).join('')}</select></div></div>`}
+function weekly(){return `<div class="card"><h2>Your 7-Day Plan</h2><p class="muted small">Repeat this schedule every week. Rest days are not missed workouts.</p>${days.map(d=>{let date=new Date();let monday=new Date(date);monday.setDate(date.getDate()-((date.getDay()+6)%7));let target=new Date(monday);target.setDate(monday.getDate()+days.indexOf(d));let key=dateKey(target),r=data.records[key],status=r?statusLabel(r):plan[d].type==='Rest'?'Rest Day':plan[d].type==='Recovery'?'Recovery':'Not Started';return `<div class="day"><div><strong>${d}</strong><div class="muted small">${plan[d].title}</div></div><span class="tag ${status==='Completed'?'done':status.includes('Rest')||status==='Recovery'?'rest':''}">${status}</span></div>`}).join('')}</div><div class="card"><h2>Daily schedule</h2><div class="day"><span>Warm-up</span><strong>6:30–6:40 PM</strong></div><div class="day"><span>Main workout</span><strong>6:40–7:15 PM</strong></div><div class="day"><span>Cool-down</span><strong>7:15–7:25 PM</strong></div><div class="day"><span>Relax</span><strong>7:25–7:30 PM</strong></div></div>`}
+function weekCompleted(){let n=0;let now=new Date();let monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));for(let i=0;i<7;i++){let d=new Date(monday);d.setDate(monday.getDate()+i);let r=data.records[dateKey(d)];if(r&&statusLabel(r)==='Completed'&&!isRest(r.day))n++}return n}
+function historyView(){let entries=Object.keys(data.records).sort().reverse();return `<div class="card"><h2>Progress & History</h2><div class="grid"><div class="stat"><span class="muted small">Completed workouts</span><strong>${entries.filter(k=>statusLabel(data.records[k])==='Completed'&&!isRest(data.records[k].day)).length}</strong></div><div class="stat"><span class="muted small">This week</span><strong>${weekCompleted()}/5</strong></div></div><h3 style="margin-top:16px">Weight tracker</h3><label>Current weight (kg)</label><input type="number" step="0.1" min="1" id="weightInput" value="${data.weight||37}"><button class="btn secondary" id="saveWeight">Save weight</button><label style="display:block;margin-top:12px">Add dated weight entry (optional)</label><input type="date" id="weightDate" value="${dateKey()}"><input type="number" step="0.1" min="1" id="weightEntry" placeholder="Weight in kg"><button class="btn light" id="addWeight">Add to weight history</button>${data.weights.length?'<h3 style="margin-top:16px">Weight history</h3>'+data.weights.slice().reverse().map(w=>`<div class="day"><span>${escapeHtml(w.date)}</span><strong>${w.weight} kg</strong></div>`).join(''):''}</div><div class="card"><h2>Workout history</h2>${entries.length?entries.map(k=>{let r=data.records[k];return `<div class="day"><div><strong>${escapeHtml(k)}</strong><div class="muted small">${escapeHtml(r.title)}</div></div><span class="tag ${statusLabel(r)==='Completed'?'done':''}">${statusLabel(r)} · ${percent(r)}%</span></div>`}).join(''):'<p class="muted">Your completed workouts will appear here.</p>'}<button class="btn light" id="exportBtn">Export history as CSV</button></div>`}
+function settings(){return `<div class="card"><h2>Settings</h2><p class="muted small">Personal workout preferences</p><label>Workout time</label><input value="6:30 PM – 7:30 PM" readonly><label>Reminder (browser support varies)</label><div class="row"><span class="muted small">Reminder at 6:25 PM</span><input type="checkbox" id="reminder" style="width:22px" ${data.reminder?'checked':''}></div><p class="muted small">Browser notifications may not work reliably when the app is closed. Your workout tracker does not need notifications to function.</p><button class="btn light" id="backupBtn">Download backup</button><label style="display:block;margin-top:12px">Restore backup</label><input type="file" id="restoreFile" accept=".json,application/json"><button class="btn danger" id="resetBtn">Reset all workout data</button></div><div class="notice">Your records are saved on this device in this browser/app. Export a backup occasionally, especially before clearing browser data or reinstalling.</div><div class="foot">My Fitness Journey · Offline personal tracker</div>`}
+function wire(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
+let sb=document.getElementById('startBtn');if(sb)sb.onclick=()=>{let r=rec();if(!r.started)r.started=new Date().toISOString();r.ended=null;save();tab='home';render();};
+document.querySelectorAll('.statusSelect').forEach(s=>s.onchange=()=>{let r=rec();r.statuses[+s.dataset.i]=s.value;if(s.value==='In Progress'&&!r.started)r.started=new Date().toISOString();save();render()});
+let f=document.getElementById('finishBtn');if(f)f.onclick=()=>{let r=rec();r.ended=new Date().toISOString();if(r.started)r.duration=Math.max(0,Math.round((new Date(r.ended)-new Date(r.started))/60000));save();alert('Workout saved! Your progress has been recorded.');render()};
+let sw=document.getElementById('saveWeight');if(sw)sw.onclick=()=>{let v=parseFloat(document.getElementById('weightInput').value);if(v>0){data.weight=v;save();render()}};
+let aw=document.getElementById('addWeight');if(aw)aw.onclick=()=>{let v=parseFloat(document.getElementById('weightEntry').value),d=document.getElementById('weightDate').value;if(v>0&&d){data.weights.push({date:d,weight:v});data.weight=v;save();render()}};
+let ex=document.getElementById('exportBtn');if(ex)ex.onclick=exportCSV;
+let rem=document.getElementById('reminder');if(rem)rem.onchange=()=>{data.reminder=rem.checked;save()};
+let bb=document.getElementById('backupBtn');if(bb)bb.onclick=()=>download('my-fitness-backup.json',JSON.stringify(data,null,2),'application/json');
+let rf=document.getElementById('restoreFile');if(rf)rf.onchange=()=>{let file=rf.files[0];if(!file)return;let reader=new FileReader();reader.onload=()=>{try{let x=JSON.parse(reader.result);if(x.records){data=x;save();render();alert('Backup restored.')}else alert('Invalid backup file.')}catch(e){alert('Could not read backup.')}};reader.readAsText(file)};
+let reset=document.getElementById('resetBtn');if(reset)reset.onclick=()=>{if(confirm('Delete all workout and weight history from this device?')){localStorage.removeItem(STORE);data=load();render()}};
+}
+function download(name,content,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
+function exportCSV(){let rows=[['Date','Day','Workout','Status','Completed','Total','Percent','Duration minutes']];Object.keys(data.records).sort().forEach(k=>{let r=data.records[k];rows.push([k,r.day,r.title,statusLabel(r),doneCount(r),r.statuses.length,percent(r),r.duration||0])});download('workout-history.csv',rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')}
+render();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+</script>
+</body>
+</html>
